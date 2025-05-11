@@ -4,4 +4,7 @@ version = "0.1.0"
 description = "Plots contestants on a racecourse using their estimated positions based on times/splits"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "numba>=0.61.2",
+    "numpy>=2.2.5",
+]
