@@ -1,0 +1,7 @@
+[project]
+name = "courseplotter"
+version = "0.1.0"
+description = "Plots contestants on a racecourse using their estimated positions based on times/splits"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
