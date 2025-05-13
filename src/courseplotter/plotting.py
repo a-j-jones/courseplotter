@@ -30,6 +30,7 @@ class Theme:
     plot_zoom: float = 10
     background_colour: str = "black"
     font_colour: str = "white"
+    randomness_scale: float = 1
 
 
 class CoursePlotter:
@@ -46,6 +47,7 @@ class CoursePlotter:
         self.course_plot = None
         self.colour_scatter = None
         self.white_scatter = None
+        self.plot_size = None
 
     def calculate_positions(self, frequency_s: int) -> None:
         self.positions = calculate_plotting_coordinates(timings=self.timings, course=self.course, frequency=frequency_s)
@@ -78,7 +80,8 @@ class CoursePlotter:
         all = self.positions
         df = all.loc[all["time"] == time_s].copy()
 
-        df["weights"] = get_randomness_size(df["distance"], 150, 1500) * 0.002
+        base_scale = self.plot_size * 0.0025
+        df["weights"] = get_randomness_size(df["distance"], 100, 150) * base_scale * self.theme.randomness_scale
         random_x = np.random.normal(scale=df["weights"], size=len(df))
         random_y = np.random.normal(scale=df["weights"], size=len(df))
 
@@ -154,6 +157,7 @@ class CoursePlotter:
         lat_min = self.course["latitude"].min()
         lon_range = lon_max - lon_min
         lat_range = lat_max - lat_min
+        self.plot_size = max(lon_range, lat_range)
 
         # Calculate the center of the data's bounding box
         center_lon = (lon_min + lon_max) / 2
