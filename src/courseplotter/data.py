@@ -101,6 +101,9 @@ def calculate_plotting_coordinates(timings: pd.DataFrame, course: pd.DataFrame, 
     check_columns(timings, ["id", "distance", "time"])
     check_columns(course, ["distance", "longitude", "latitude"])
 
+    timings = timings.sort_values(["id", "distance"])
+    course = course.sort_values(["distance"])
+
     course_array = course[["distance", "longitude", "latitude"]].values
 
     with tqdm(total=len(timings["id"].unique()), position=0) as pbar:
