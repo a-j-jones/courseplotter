@@ -154,22 +154,28 @@ class CoursePlotter:
         lat_min = self.course["latitude"].min()
         lon_range = lon_max - lon_min
         lat_range = lat_max - lat_min
-        max_range = max(lon_range, lat_range)
 
         # Calculate the center of the data's bounding box
         center_lon = (lon_min + lon_max) / 2
         center_lat = (lat_min + lat_max) / 2
 
-        # Calculate the new limits based on the center and the max_range, adding the margin
+        # Get the plot aspect ratio (width / height)
         ratio = self.theme.plot_width / self.theme.plot_height
-        margin = 0.01
+        if ratio <= 0:
+            ratio = 1.0  # Default to square aspect ratio if invalid
 
-        new_lon_min = center_lon - (max_range / 2) - margin
-        new_lon_max = center_lon + (max_range / 2) + margin
-        new_lat_min = center_lat - ((max_range / ratio) / 2) - margin
-        new_lat_max = center_lat + ((max_range / ratio) / 2) + margin
+        # Define margin in data units
+        margin = 0.05
+        half_lon_span = max(lon_range / 2, ratio * (lat_range / 2)) * (margin + 1)
+        half_lat_span = half_lon_span / ratio * (margin + 1)
 
-        # Set the plot limits to create a square area in data coordinates
+        # Calculate the new limits based on the center and the calculated half-spans
+        new_lon_min = center_lon - half_lon_span
+        new_lon_max = center_lon + half_lon_span
+        new_lat_min = center_lat - half_lat_span
+        new_lat_max = center_lat + half_lat_span
+
+        # Set the plot limits
         self.ax.set_xlim(new_lon_min, new_lon_max)
         self.ax.set_ylim(new_lat_min, new_lat_max)
 
