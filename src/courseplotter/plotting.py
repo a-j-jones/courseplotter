@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import Optional
 
@@ -9,6 +10,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from src.courseplotter.data import calculate_plotting_coordinates
+
+logger = logging.getLogger("courseplotter")
 
 
 def get_randomness_size(distances: pd.Series, bins: int = 100, scale: int = 2500) -> np.ndarray:
@@ -141,9 +144,7 @@ class CoursePlotter:
         try:
             cx.add_basemap(self.ax, crs="EPSG:4326", source=cx.providers.CartoDB.DarkMatter)
         except Exception as e:
-            raise Exception(
-                f"Could not add basemap: {e}\nEnsure you have internet access and a basemap source is available."
-            )
+            logger.warning("Could not apply basemap %s", e)
 
     def _set_figure_colours(self) -> None:
         self.fig.patch.set_facecolor(self.theme.background_colour)
