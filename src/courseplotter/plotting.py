@@ -52,6 +52,15 @@ class CoursePlotter:
         self.white_scatter = None
         self.plot_size = None
 
+    def create_animation(
+        self, frequency_seconds: int = 60, title: str = "Course Animation", filename: str = "animation.gif"
+    ) -> None:
+        self.calculate_positions(frequency_seconds)
+        self.create_figure(title=title)
+        self.add_noise()
+        self.create_plots()
+        self.animate_plot(filename=filename)
+
     def calculate_positions(self, frequency_s: int) -> None:
         self.positions = calculate_plotting_coordinates(timings=self.timings, course=self.course, frequency=frequency_s)
 
@@ -80,26 +89,43 @@ class CoursePlotter:
         )
         self.white_scatter = self.ax.scatter([], [], s=5, alpha=0.025, c="white", zorder=3)
 
+    def add_noise(self, sample_freq: int = 5) -> None:
+        frames = self.positions["time"].unique()
+        samples = list(range(0, len(frames), sample_freq))
+        samples[-1] = max(samples[-1], len(frames) - 1)
+
+        df = self.positions
+        df[["x_noise", "y_noise"]] = [np.nan, np.nan]
+
+        for idx in tqdm(samples, ncols=120, desc="Creating noise", position=0):
+            time_s = frames[idx]
+            mask = df["time"] == time_s
+            count = len(df.loc[mask])
+
+            base_scale = self.plot_size * 0.0025
+            weights = get_randomness_size(df.loc[mask, "distance"], 100, 150) * base_scale * self.theme.randomness_scale
+            random_x = np.random.normal(scale=weights, size=count)
+            random_y = np.random.normal(scale=weights, size=count)
+            df.loc[mask, "x_noise"] = random_x
+            df.loc[mask, "y_noise"] = random_y
+
+        df[["x_noise", "y_noise"]] = df.reset_index()[["x_noise", "y_noise"]].interpolate("cubicspline").values
+        df["longitude_noise_colour"] = df["longitude"] + df["x_noise"]
+        df["latitude_noise_colour"] = df["latitude"] + df["y_noise"]
+        df["longitude_noise_white"] = df["longitude"] + (df["x_noise"] * 0.75)
+        df["latitude_noise_white"] = df["latitude"] + (df["y_noise"] * 0.75)
+
     def plot_data(self, time_s: Optional[int] = None) -> plt.Figure:
         all = self.positions
         df = all.loc[all["time"] == time_s].copy()
 
-        base_scale = self.plot_size * 0.0025
-        df["weights"] = get_randomness_size(df["distance"], 100, 150) * base_scale * self.theme.randomness_scale
-        random_x = np.random.normal(scale=df["weights"], size=len(df))
-        random_y = np.random.normal(scale=df["weights"], size=len(df))
-
-        # Coloured dots:
-        df["longitude_noise"] = df["longitude"] + random_x
-        df["latitude_noise"] = df["latitude"] + random_y
-        coordinates = df[["longitude_noise", "latitude_noise"]].values
+        # Colour dots:
+        coordinates = df[["longitude_noise_colour", "latitude_noise_colour"]].values
         self.colour_scatter.set_offsets(coordinates)
         self.colour_scatter.set_array(df["distance"])
 
         # White dots:
-        df["longitude_noise"] = df["longitude"] + (random_x * 0.75)
-        df["latitude_noise"] = df["latitude"] + (random_y * 0.75)
-        coordinates = df[["longitude_noise", "latitude_noise"]].values
+        coordinates = df[["longitude_noise_white", "latitude_noise_white"]].values
         self.white_scatter.set_offsets(coordinates)
 
         # Update timer:
@@ -120,7 +146,7 @@ class CoursePlotter:
             repeat=True,
         )
 
-        with tqdm(total=len(frames), desc="Saving video") as pbar:
+        with tqdm(total=len(frames), ncols=120, desc="Saving video", position=0) as pbar:
 
             def update_func(_i, _n) -> None:
                 pbar.update()

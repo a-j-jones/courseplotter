@@ -106,7 +106,7 @@ def calculate_plotting_coordinates(timings: pd.DataFrame, course: pd.DataFrame, 
 
     course_array = course[["distance", "longitude", "latitude"]].values
 
-    with tqdm(total=len(timings["id"].unique()), position=0) as pbar:
+    with tqdm(total=len(timings["id"].unique()), ncols=120, desc="Interpolating positions", position=0) as pbar:
         interpolated_timings: pd.DataFrame = timings.groupby("id").apply(
             apply_interpolation, course_arr=course_array, frequency_s=frequency, pbar=pbar, include_groups=False
         )
