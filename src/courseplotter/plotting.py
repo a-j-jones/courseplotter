@@ -55,7 +55,7 @@ class CoursePlotter:
     def calculate_positions(self, frequency_s: int) -> None:
         self.positions = calculate_plotting_coordinates(timings=self.timings, course=self.course, frequency=frequency_s)
 
-    def create_figure(self) -> None:
+    def create_figure(self, title: str = "") -> None:
         if self.positions is None:
             raise ValueError("Positions must be calculated first: Run `CoursePlotter.calculate_positions`")
 
@@ -63,6 +63,7 @@ class CoursePlotter:
         self.ax.grid(False)
         self.ax.axis("off")
         self.ax.set_aspect("equal", "box")
+        self.ax.set_title(title, fontdict={"color": "white", "fontsize": 20})
 
         # Apply configuration:
         self._set_figure_colours()
